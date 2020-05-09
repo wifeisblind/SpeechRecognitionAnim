@@ -1,5 +1,8 @@
 package com.example.tryanimation
 
+import android.animation.AnimatorListenerAdapter
+import android.animation.AnimatorSet
+import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.animation.ValueAnimator.INFINITE
 import android.animation.ValueAnimator.REVERSE
@@ -9,7 +12,6 @@ import android.graphics.Color.CYAN
 import android.graphics.Paint.Style.STROKE
 import android.util.AttributeSet
 import android.view.View
-import java.util.jar.Attributes
 
 class SpeechRecogAnimView(context: Context, attributeSet: AttributeSet) : View(context, attributeSet) {
 
@@ -18,10 +20,6 @@ class SpeechRecogAnimView(context: Context, attributeSet: AttributeSet) : View(c
         style = STROKE
         color = CYAN
         strokeWidth = 10f
-    }
-
-    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
     }
 
     private var rect: Rect = Rect()
@@ -45,7 +43,9 @@ class SpeechRecogAnimView(context: Context, attributeSet: AttributeSet) : View(c
 
     private var maxAmp: Float = 0f
 
-    private var amp: Float = 10f
+    var amp1: Float = 10f
+
+    var amp2: Float = 80f
 
     private val paths: List<Path> = List(SIZE) { Path() }
 
@@ -57,8 +57,13 @@ class SpeechRecogAnimView(context: Context, attributeSet: AttributeSet) : View(c
             return paths.mapIndexed { index, path ->
                 val x = pivots[index]
                 path.reset()
-                path.moveTo(x, halfHeight + amp)
-                path.lineTo(x, halfHeight - amp)
+                if (index % 2 == 0) {
+                    path.moveTo(x, halfHeight + amp1)
+                    path.lineTo(x, halfHeight - amp1)
+                } else {
+                    path.moveTo(x, halfHeight + amp2)
+                    path.lineTo(x, halfHeight - amp2)
+                }
                 path
             }
         }
@@ -72,19 +77,25 @@ class SpeechRecogAnimView(context: Context, attributeSet: AttributeSet) : View(c
         canvas.restore()
     }
 
-    lateinit var anim: ValueAnimator
+    private val initAnim: ValueAnimator.() -> Unit = {
+        addUpdateListener {
+            invalidate()
+        }
+        repeatMode = REVERSE
+        repeatCount = INFINITE
+    }
+
+    private val anim1: ObjectAnimator = ObjectAnimator.ofFloat(this, "amp1", 10f, 80f, 10f).apply(initAnim)
+    private val anim2: ObjectAnimator = ObjectAnimator.ofFloat(this, "amp2",80f, 10f, 80f).apply(initAnim)
+
+    private val animSet: AnimatorSet = AnimatorSet().apply {
+        play(anim1).with(anim2)
+        duration = 1000
+    }
 
     fun startAnim() {
-        anim = ValueAnimator.ofFloat(10f, 80f, 10f).apply {
-            addUpdateListener {
-                amp = it.animatedValue as Float
-                invalidate()
-            }
-            duration = 1000
-            repeatMode = REVERSE
-            repeatCount = INFINITE
-        }
-        anim.start()
+        animSet.start()
+
     }
 
     companion object{
