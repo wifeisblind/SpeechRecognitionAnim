@@ -1,6 +1,5 @@
 package com.example.tryanimation
 
-import android.animation.AnimatorListenerAdapter
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
@@ -31,8 +30,8 @@ class SpeechRecogAnimView(context: Context, attributeSet: AttributeSet) : View(c
             pivots.add(seg * i)
         }
 
-        minAmp = height * 0.1f
-        maxAmp = height * 0.9f
+        minAmp = halfHeight * 0.1f
+        offset = halfHeight * 0.8f
 
         super.onLayout(changed, left, top, right, bottom)
     }
@@ -41,11 +40,17 @@ class SpeechRecogAnimView(context: Context, attributeSet: AttributeSet) : View(c
 
     private var minAmp: Float = 0f
 
-    private var maxAmp: Float = 0f
+    private var offset: Float = 0f
 
-    var amp1: Float = 10f
+    var amp1: Float = 0f
+        set(value) {
+            field = minAmp + value * offset * weight
+        }
 
-    var amp2: Float = 80f
+    var amp2: Float = 0f
+        set(value) {
+            field = minAmp + value * offset * weight
+        }
 
     private val paths: List<Path> = List(SIZE) { Path() }
 
@@ -58,6 +63,7 @@ class SpeechRecogAnimView(context: Context, attributeSet: AttributeSet) : View(c
                 val x = pivots[index]
                 path.reset()
                 if (index % 2 == 0) {
+
                     path.moveTo(x, halfHeight + amp1)
                     path.lineTo(x, halfHeight - amp1)
                 } else {
@@ -85,17 +91,23 @@ class SpeechRecogAnimView(context: Context, attributeSet: AttributeSet) : View(c
         repeatCount = INFINITE
     }
 
-    private val anim1: ObjectAnimator = ObjectAnimator.ofFloat(this, "amp1", 10f, 80f, 10f).apply(initAnim)
-    private val anim2: ObjectAnimator = ObjectAnimator.ofFloat(this, "amp2",80f, 10f, 80f).apply(initAnim)
+    private val factor1: ObjectAnimator = ObjectAnimator.ofFloat(this, "amp1", 0f, 1f, 0f).apply(initAnim)
+    private val factor2: ObjectAnimator = ObjectAnimator.ofFloat(this, "amp2",1f, 0f, 1f).apply(initAnim)
 
     private val animSet: AnimatorSet = AnimatorSet().apply {
-        play(anim1).with(anim2)
+        play(factor1).with(factor2)
         duration = 1000
     }
 
     fun startAnim() {
         animSet.start()
 
+    }
+
+    private var weight: Float = 1f
+
+    fun setAmpWeight(weight: Int) {
+        this.weight = weight / 100f
     }
 
     companion object{

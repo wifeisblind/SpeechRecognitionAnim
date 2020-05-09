@@ -15,6 +15,7 @@ class MainActivity : AppCompatActivity() {
 
         seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                anim.setAmpWeight(progress)
                 tvAmp.text = progress.toString()
             }
 
