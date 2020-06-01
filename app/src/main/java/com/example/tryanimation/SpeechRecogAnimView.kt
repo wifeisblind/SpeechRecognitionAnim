@@ -1,5 +1,6 @@
 package com.example.tryanimation
 
+import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.animation.ValueAnimator.INFINITE
 import android.animation.ValueAnimator.REVERSE
@@ -8,20 +9,18 @@ import android.graphics.*
 import android.graphics.Color.CYAN
 import android.graphics.Paint.Style.STROKE
 import android.util.AttributeSet
+import android.util.Log
 import android.view.View
+import android.view.animation.LinearInterpolator
 import java.util.jar.Attributes
 
 class SpeechRecogAnimView(context: Context, attributeSet: AttributeSet) : View(context, attributeSet) {
 
-
     private val paint: Paint = Paint().apply {
         style = STROKE
-        color = CYAN
-        strokeWidth = 10f
-    }
-
-    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+        color = Color.parseColor("#D62872")
+        strokeWidth = 8f
+        strokeCap = Paint.Cap.ROUND
     }
 
     private var rect: Rect = Rect()
@@ -33,19 +32,12 @@ class SpeechRecogAnimView(context: Context, attributeSet: AttributeSet) : View(c
             pivots.add(seg * i)
         }
 
-        minAmp = height * 0.1f
-        maxAmp = height * 0.9f
-
         super.onLayout(changed, left, top, right, bottom)
     }
 
     private val pivots: MutableList<Float> = mutableListOf()
 
-    private var minAmp: Float = 0f
-
-    private var maxAmp: Float = 0f
-
-    private var amp: Float = 10f
+    var amp: Float = 10f
 
     private val paths: List<Path> = List(SIZE) { Path() }
 
@@ -72,22 +64,20 @@ class SpeechRecogAnimView(context: Context, attributeSet: AttributeSet) : View(c
         canvas.restore()
     }
 
-    lateinit var anim: ValueAnimator
-
     fun startAnim() {
-        anim = ValueAnimator.ofFloat(10f, 80f, 10f).apply {
+        ObjectAnimator.ofFloat(this, "amp", 10f, 80f, 10f).apply {
             addUpdateListener {
-                amp = it.animatedValue as Float
+                val value = it.animatedValue as Float
+                Log.d("SpeechRecogAnimView", "$value")
                 invalidate()
             }
+            interpolator = LinearInterpolator()
             duration = 1000
-            repeatMode = REVERSE
             repeatCount = INFINITE
-        }
-        anim.start()
+        }.start()
     }
 
     companion object{
-        private const val SIZE = 20
+        private const val SIZE = 30
     }
 }
