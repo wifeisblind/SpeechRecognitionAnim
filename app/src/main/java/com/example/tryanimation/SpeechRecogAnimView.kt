@@ -1,5 +1,6 @@
 package com.example.tryanimation
 
+import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.animation.ValueAnimator.INFINITE
@@ -37,7 +38,9 @@ class SpeechRecogAnimView(context: Context, attributeSet: AttributeSet) : View(c
 
     private val pivots: MutableList<Float> = mutableListOf()
 
-    var amp: Float = 10f
+    var amp1: Float = 10f
+
+    var amp2: Float = 80f
 
     private val paths: List<Path> = List(SIZE) { Path() }
 
@@ -49,8 +52,13 @@ class SpeechRecogAnimView(context: Context, attributeSet: AttributeSet) : View(c
             return paths.mapIndexed { index, path ->
                 val x = pivots[index]
                 path.reset()
-                path.moveTo(x, halfHeight + amp)
-                path.lineTo(x, halfHeight - amp)
+                if (index % 2 == 0) {
+                    path.moveTo(x, halfHeight + amp1)
+                    path.lineTo(x, halfHeight - amp1)
+                } else {
+                    path.moveTo(x, halfHeight + amp2)
+                    path.lineTo(x, halfHeight - amp2)
+                }
                 path
             }
         }
@@ -64,16 +72,22 @@ class SpeechRecogAnimView(context: Context, attributeSet: AttributeSet) : View(c
         canvas.restore()
     }
 
+    private val initAnim: ValueAnimator.() -> Unit = {
+        addUpdateListener {
+            invalidate()
+        }
+        repeatCount = INFINITE
+    }
+
+    private val anim1: ObjectAnimator = ObjectAnimator.ofFloat(this, "amp1", 10f, 80f, 10f).apply(initAnim)
+    private val anim2: ObjectAnimator = ObjectAnimator.ofFloat(this, "amp2",80f, 10f, 80f).apply(initAnim)
+
     fun startAnim() {
-        ObjectAnimator.ofFloat(this, "amp", 10f, 80f, 10f).apply {
-            addUpdateListener {
-                val value = it.animatedValue as Float
-                Log.d("SpeechRecogAnimView", "$value")
-                invalidate()
-            }
+
+        AnimatorSet().apply {
+            play(anim1).with(anim2)
             interpolator = LinearInterpolator()
             duration = 1000
-            repeatCount = INFINITE
         }.start()
     }
 
