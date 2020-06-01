@@ -125,15 +125,15 @@ class SpeechRecogAnimView(context: Context, attributeSet: AttributeSet) : View(c
 
         fun createAnimator(weight: Int): ValueAnimator {
 
-                val keyframe = Random.nextInt(1, weight) / 100f
+            val keyframe = Random.nextInt(0, weight) / 100f
 
-                return ObjectAnimator.ofFloat(this, "amp",
-                    lastKeyFrame,
-                    keyframe
-                ).apply {
-                    doOnStart { lastKeyFrame = keyframe }
-                }
+            return ObjectAnimator.ofFloat(this, "amp",
+                lastKeyFrame,
+                keyframe
+            ).apply {
+                doOnStart { lastKeyFrame = keyframe }
             }
+        }
 
         fun draw(canvas: Canvas) {
             canvas.drawPath(runtimePath, paint)
