@@ -54,6 +54,16 @@ class SpeechRecogAnimView(context: Context, attributeSet: AttributeSet) : View(c
             field = minAmp + value * offset * weight
         }
 
+    var amp3: Float = 0f
+        set(value) {
+            field = minAmp + value * offset * weight
+        }
+
+    var amp4: Float = 0f
+        set(value) {
+            field = minAmp + value * offset * weight
+        }
+
     private val paths: List<Path> = List(SIZE) { Path() }
 
     private val halfHeight: Int
@@ -64,12 +74,23 @@ class SpeechRecogAnimView(context: Context, attributeSet: AttributeSet) : View(c
             return paths.mapIndexed { index, path ->
                 val x = pivots[index]
                 path.reset()
-                if (index % 2 == 0) {
-                    path.moveTo(x, halfHeight + amp1)
-                    path.lineTo(x, halfHeight - amp1)
-                } else {
-                    path.moveTo(x, halfHeight + amp2)
-                    path.lineTo(x, halfHeight - amp2)
+                when(index % 4) {
+                    0 -> {
+                        path.moveTo(x, halfHeight + amp1)
+                        path.lineTo(x, halfHeight - amp1)
+                    }
+                    1 -> {
+                        path.moveTo(x, halfHeight + amp2)
+                        path.lineTo(x, halfHeight - amp2)
+                    }
+                    2 -> {
+                        path.moveTo(x, halfHeight + amp3)
+                        path.lineTo(x, halfHeight - amp3)
+                    }
+                    3 -> {
+                        path.moveTo(x, halfHeight + amp4)
+                        path.lineTo(x, halfHeight - amp4)
+                    }
                 }
                 path
             }
@@ -92,19 +113,23 @@ class SpeechRecogAnimView(context: Context, attributeSet: AttributeSet) : View(c
     }
 
     private val anim1: ObjectAnimator
-        get() = ObjectAnimator.ofFloat(this, "amp1", 0f, 1f, 0f).apply(initAnim)
+        get() = ObjectAnimator.ofFloat(this, "amp1", 0f, 0.3f, 0.2f, 1f, 0f).apply(initAnim)
 
     private val anim2: ObjectAnimator
-        get() = ObjectAnimator.ofFloat(this, "amp2", 1f, 0f, 1f).apply(initAnim)
+        get() = ObjectAnimator.ofFloat(this, "amp2", 1f, 0.6f, 0.8f, 0.3f, 1f).apply(initAnim)
+
+    private val anim3: ObjectAnimator
+        get() = ObjectAnimator.ofFloat(this, "amp3", 0.8f, 0.4f, 0.5f, 0.2f, 0.8f).apply(initAnim)
+
+    private val anim4: ObjectAnimator
+        get() = ObjectAnimator.ofFloat(this, "amp4", 0.3f, 0.7f, 0.1f, 1f, 0.3f).apply(initAnim)
 
     fun startAnim() {
-        post {
-            AnimatorSet().apply {
-                play(anim1).with(anim2)
-                interpolator = LinearInterpolator()
-                duration = 1000
-            }.start()
-        }
+        AnimatorSet().apply {
+            play(anim1).with(anim2).with(anim3).with(anim4)
+            interpolator = LinearInterpolator()
+            duration = 1000
+        }.start()
     }
 
     private var weight: Float = 1f
