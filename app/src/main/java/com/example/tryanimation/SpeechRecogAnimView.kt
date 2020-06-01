@@ -6,10 +6,13 @@ import android.animation.ValueAnimator
 import android.animation.ValueAnimator.INFINITE
 import android.content.Context
 import android.graphics.*
+import android.graphics.Color.parseColor
 import android.graphics.Paint.Style.STROKE
 import android.util.AttributeSet
 import android.view.View
 import android.view.animation.LinearInterpolator
+import androidx.core.animation.doOnEnd
+import androidx.core.animation.doOnStart
 import kotlin.properties.ReadOnlyProperty
 import kotlin.random.Random
 import kotlin.reflect.KProperty
@@ -18,7 +21,7 @@ class SpeechRecogAnimView(context: Context, attributeSet: AttributeSet) : View(c
 
     private val paint: Paint = Paint().apply {
         style = STROKE
-        color = Color.parseColor("#D62872")
+        color = parseColor("#D62872")
         strokeWidth = 8f
         strokeCap = Paint.Cap.ROUND
     }
@@ -48,11 +51,7 @@ class SpeechRecogAnimView(context: Context, attributeSet: AttributeSet) : View(c
     }
 
     private var wPaths: List<WPath> = List(SIZE) {
-        WPath(paint, object : ReadOnlyProperty<WPath, Float> {
-            override fun getValue(thisRef: WPath, property: KProperty<*>): Float {
-                return weight
-            }
-        })
+        WPath(paint)
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -68,7 +67,7 @@ class SpeechRecogAnimView(context: Context, attributeSet: AttributeSet) : View(c
         AnimatorSet().apply {
             var builder: AnimatorSet.Builder? = null
             for ((index, path) in wPaths.withIndex()) {
-                val anim = path.animator.apply {
+                val anim = path.createAnimator(weight).apply {
                     addUpdateListener { invalidate() }
                 }
                 if (index == 0) {
@@ -78,14 +77,16 @@ class SpeechRecogAnimView(context: Context, attributeSet: AttributeSet) : View(c
                 }
             }
             interpolator = LinearInterpolator()
-            duration = 1000L
+            duration = 100L
+
+            doOnEnd { startAnim() }
         }.start()
     }
 
-    private var weight: Float = 1f
+    private var weight: Int = 40
 
     fun setAmpWeight(weight: Int) {
-        this.weight = weight / 100f
+        this.weight = weight
     }
 
 
@@ -94,16 +95,13 @@ class SpeechRecogAnimView(context: Context, attributeSet: AttributeSet) : View(c
     }
 
     class WPath(
-        private val paint: Paint,
-        property: ReadOnlyProperty<WPath, Float>
+        private val paint: Paint
     ) {
 
         var x: Float = 0f
         var y: Float = 0f
         var minAmp: Float = 0f
         var offset: Float = 0f
-
-        private val weight: Float by property
 
         private val path: Path = Path()
 
@@ -120,22 +118,20 @@ class SpeechRecogAnimView(context: Context, attributeSet: AttributeSet) : View(c
 
         var amp: Float = 0f
             set(value) {
-                field = minAmp + value * offset * weight
+                field = minAmp + value * offset
             }
 
-        val animator: ObjectAnimator
-            get() {
+        private var lastKeyFrame: Float = 1f
 
-                val randoms = List(4) { Random.nextInt(1, 100) / 100f }
+        fun createAnimator(weight: Int): ValueAnimator {
+
+                val keyframe = Random.nextInt(1, weight) / 100f
 
                 return ObjectAnimator.ofFloat(this, "amp",
-                    randoms[0],
-                    randoms[1],
-                    randoms[2],
-                    randoms[3],
-                    randoms[0]
+                    lastKeyFrame,
+                    keyframe
                 ).apply {
-                    repeatCount = INFINITE
+                    doOnStart { lastKeyFrame = keyframe }
                 }
             }
 
