@@ -33,14 +33,26 @@ class SpeechRecogAnimView(context: Context, attributeSet: AttributeSet) : View(c
             pivots.add(seg * i)
         }
 
+        minAmp = halfHeight * 0.1f
+        offset = halfHeight * 0.8f
         super.onLayout(changed, left, top, right, bottom)
     }
 
+    private var offset: Float = 0f
+
+    private var minAmp: Float = 0f
+
     private val pivots: MutableList<Float> = mutableListOf()
 
-    var amp1: Float = 10f
+    var amp1: Float = 0f
+        set(value) {
+            field = minAmp + value * offset * weight
+        }
 
-    var amp2: Float = 80f
+    var amp2: Float = 0f
+        set(value) {
+            field = minAmp + value * offset * weight
+        }
 
     private val paths: List<Path> = List(SIZE) { Path() }
 
@@ -79,17 +91,28 @@ class SpeechRecogAnimView(context: Context, attributeSet: AttributeSet) : View(c
         repeatCount = INFINITE
     }
 
-    private val anim1: ObjectAnimator = ObjectAnimator.ofFloat(this, "amp1", 10f, 80f, 10f).apply(initAnim)
-    private val anim2: ObjectAnimator = ObjectAnimator.ofFloat(this, "amp2",80f, 10f, 80f).apply(initAnim)
+    private val anim1: ObjectAnimator
+        get() = ObjectAnimator.ofFloat(this, "amp1", 0f, 1f, 0f).apply(initAnim)
+
+    private val anim2: ObjectAnimator
+        get() = ObjectAnimator.ofFloat(this, "amp2", 1f, 0f, 1f).apply(initAnim)
 
     fun startAnim() {
-
-        AnimatorSet().apply {
-            play(anim1).with(anim2)
-            interpolator = LinearInterpolator()
-            duration = 1000
-        }.start()
+        post {
+            AnimatorSet().apply {
+                play(anim1).with(anim2)
+                interpolator = LinearInterpolator()
+                duration = 1000
+            }.start()
+        }
     }
+
+    private var weight: Float = 1f
+
+    fun setAmpWeight(weight: Int) {
+        this.weight = weight / 100f
+    }
+
 
     companion object{
         private const val SIZE = 30
